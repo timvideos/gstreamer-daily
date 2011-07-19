@@ -2,10 +2,20 @@
 
 set -e
 
+GPGKEY=0x090AC729
 DATE=`date -u +%Y%m%d%H%M%S`
 DATE_LONG=`date -u -R`
 BASEVERSION=0.10.35.1
 ROOT=`pwd`
+BUILD=0
+
+function build {
+	if [ $BUILD -eq 1 ]; then 
+		fakeroot debian/rules binary
+	fi
+	debuild -S -sa -k$GPGKEY
+}
+
 
 echo $DATE
 
@@ -35,9 +45,9 @@ rm -rf gstreamer0.10-$BASEVERSION
 TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
-DSC=gstreamer0.10_$BASEVERSION~git$DATE.dsc
 cp $ROOT/gstreamer-debian.tar.gz gstreamer0.10_$BASEVERSION~git$DATE.debian.tar.gz
 
+DSC=gstreamer0.10_$BASEVERSION~git$DATE.dsc
 cat > $DSC <<EOF 
 Format: 3.0 (quilt)
 Source: gstreamer0.10
@@ -69,11 +79,13 @@ EOF
 cat debian/changelog >> debian/changelog-new
 mv debian/changelog-new debian/changelog
 
-fakeroot debian/rules binary
+build
 
-cd ..
-sudo dpkg --install gir1.0-* lib*.deb
-sudo dpkg --install gstreamer0.10-tools*.deb
+if [ $BUILD -eq 1 ]; then 
+	cd ..
+	sudo dpkg --install gir1.0-* lib*.deb
+	sudo dpkg --install gstreamer0.10-tools*.deb
+fi
 
 # Build gst-plugins-base
 ###############################################################################
@@ -93,9 +105,9 @@ cp gst-plugins-base/gst-plugins-base-$BASEVERSION.tar.gz $TAR
 TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
-DSC=gst-plugins-base_$BASEVERSION~git$DATE.dsc
 cp $ROOT/gst-plugins-base-debian.tar.gz gst-plugins-base0.10_$BASEVERSION~git$DATE.debian.tar.gz
 
+DSC=gst-plugins-base_$BASEVERSION~git$DATE.dsc
 cat > $DSC <<EOF 
 Format: 3.0 (quilt)
 Source: gst-plugins-base0.10
@@ -106,13 +118,15 @@ Maintainer: Maintainers of GStreamer packages <pkg-gstreamer-maintainers@lists.a
 Uploaders: Loic Minier <lool@dooz.org>, Sebastien Bacher <seb128@debian.org>, Sebastian Dröge <slomo@debian.org>, Sjoerd Simons <sjoerd@debian.org>
 Homepage: http://gstreamer.freedesktop.org
 Standards-Version: 3.8.4
-Build-Depends: libgstreamer0.10-dev (>= $BASEVERSION), libasound2-dev (>= 0.9.0) [linux-any], libgudev-1.0-dev (>= 143) [linux-any], autotools-dev, dh-autoreconf, autopoint | gettext, cdbs (>= 0.4.20), debhelper (>= 7), gnome-pkg-tools (>= 0.7), pkg-config (>= 0.11.0), libxv-dev (>= 6.8.2.dfsg.1-3), libxt-dev (>= 6.8.2.dfsg.1-3), libvorbis-dev (>= 1.0.0-2), libcdparanoia-dev (>= 3.10.2) [!hurd-i386], libgnomevfs2-dev (>= 1:2.20.0-2), liborc-0.4-dev (>= 1:0.4.11), libpango1.0-dev (>= 1.16.0), libtheora-dev (>= 1.1), libglib2.0-dev (>= 2.22), libxml2-dev (>= 2.4.23), zlib1g-dev (>= 1:1.1.4), libvisual-0.4-dev (>= 0.4.0), gstreamer-tools (>= $BASEVERSION), dpkg-dev (>= 1.15.1), iso-codes, libgtk2.0-dev (>= 2.12.0), libglib2.0-doc, gstreamer0.10-doc, libgirepository1.0-dev (>= 0.6.3), gobject-introspection (>= 0.6.5), gir1.0-glib-2.0, gir1.0-freedesktop, gir1.0-gstreamer-0.10
+Build-Depends: libgstreamer0.10-dev (= $BASEVERSION~git$DATE), libasound2-dev (>= 0.9.0) [linux-any], libgudev-1.0-dev (>= 143) [linux-any], autotools-dev, dh-autoreconf, autopoint | gettext, cdbs (>= 0.4.20), debhelper (>= 7), gnome-pkg-tools (>= 0.7), pkg-config (>= 0.11.0), libxv-dev (>= 6.8.2.dfsg.1-3), libxt-dev (>= 6.8.2.dfsg.1-3), libvorbis-dev (>= 1.0.0-2), libcdparanoia-dev (>= 3.10.2) [!hurd-i386], libgnomevfs2-dev (>= 1:2.20.0-2), liborc-0.4-dev (>= 1:0.4.11), libpango1.0-dev (>= 1.16.0), libtheora-dev (>= 1.1), libglib2.0-dev (>= 2.22), libxml2-dev (>= 2.4.23), zlib1g-dev (>= 1:1.1.4), libvisual-0.4-dev (>= 0.4.0), gstreamer-tools (= $BASEVERSION~git$DATE), dpkg-dev (>= 1.15.1), iso-codes, libgtk2.0-dev (>= 2.12.0), libglib2.0-doc, gstreamer0.10-doc, libgirepository1.0-dev (>= 0.6.3), gobject-introspection (>= 0.6.5), gir1.0-glib-2.0, gir1.0-freedesktop, gir1.0-gstreamer-0.10
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
  bc99a450f05e4ca4cebc2d6b75ed7c31 40377 gst-plugins-base0.10_$BASEVERSION~git$DATE.debian.tar.gz
 EOF
 
-dpkg-source -x $DSC
+debuild -S -sa -k$GPGKEY
+cd ..
+dput timsvideo gstreamer0.10_$BASEVERSION~git$DATE_source.changes
 
 cd gst-plugins-base0.10-$BASEVERSION~git$DATE
 cat > debian/changelog-new <<EOF
@@ -126,9 +140,12 @@ EOF
 cat debian/changelog >> debian/changelog-new
 mv debian/changelog-new debian/changelog
 
-fakeroot debian/rules binary
-cd ..
-sudo dpkg --install lib*base*.deb
+build
+
+if [ $BUILD -eq 1 ]; then 
+	cd ..
+	sudo dpkg --install gir1.0-*base* lib*base*.deb
+fi
 
 # Build gst-plugins-good
 ###############################################################################
@@ -150,9 +167,9 @@ cp gst-plugins-good/gst-plugins-good-$GOODVERSION.tar.gz $TAR
 TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
-DSC=gst-plugins-good0.10_$GOODVERSION~git$DATE.dsc
 cp $ROOT/gst-plugins-good-debian.tar.gz gst-plugins-good0.10_$GOODVERSION~git$DATE.debian.tar.gz
 
+DSC=gst-plugins-good0.10_$GOODVERSION~git$DATE.dsc
 cat > $DSC <<EOF 
 Format: 3.0 (quilt)
 Source: gst-plugins-good0.10
@@ -162,7 +179,7 @@ Version: $GOODVERSION~git$DATE
 Maintainer: Maintainers of GStreamer packages <pkg-gstreamer-maintainers@lists.alioth.debian.org>
 Uploaders: Loic Minier <lool@dooz.org>, Sebastian Dröge <slomo@debian.org>, Sjoerd Simons <sjoerd@debian.org>
 Standards-Version: 3.8.4
-Build-Depends: libgstreamer0.10-dev (>= $BASEVERSION), libraw1394-dev (>= 2.0.0) [linux-any], libiec61883-dev (>= 1.0.0) [linux-any], libavc1394-dev [linux-any], libv4l-dev [linux-any], libgudev-1.0-dev (>= 143) [linux-any], libgstreamer-plugins-base0.10-dev (>= $BASEVERSION), autotools-dev, dh-autoreconf, autopoint | gettext, cdbs (>= 0.4.20), debhelper (>= 5), dpkg-dev (>= 1.15.1), pkg-config (>= 0.11.0), gtk-doc-tools, gconf2, libglib2.0-dev (>= 2.22), liborc-0.4-dev (>= 1:0.4.11), libcairo2-dev, libcaca-dev, libspeex-dev (>= 1.1.6), libpng12-dev, libshout3-dev, libjpeg62-dev (>= 6b), libaa1-dev (>= 1.4p5), libflac-dev (>= 1.1.4), libdv4-dev | libdv-dev, libgconf2-dev, libxdamage-dev, libxext-dev, libxfixes-dev, libxv-dev, libxml2-dev, libgtk2.0-dev (>= 2.8), libtag1-dev (>= 1.5), libwavpack-dev (>= 4.20), gstreamer-tools (>= $BASEVERSION), gstreamer0.10-plugins-base (>= $BASEVERSION), libsoup-gnome2.4-dev (>= 2.26), libpulse-dev (>= 0.9.20), libbz2-dev, gstreamer0.10-doc, gstreamer0.10-plugins-base-doc, libjack-dev (>= 0.99.10)
+Build-Depends: libgstreamer0.10-dev (= $BASEVERSION~git$DATE), libraw1394-dev (>= 2.0.0) [linux-any], libiec61883-dev (>= 1.0.0) [linux-any], libavc1394-dev [linux-any], libv4l-dev [linux-any], libgudev-1.0-dev (>= 143) [linux-any], libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE), autotools-dev, dh-autoreconf, autopoint | gettext, cdbs (>= 0.4.20), debhelper (>= 5), dpkg-dev (>= 1.15.1), pkg-config (>= 0.11.0), gtk-doc-tools, gconf2, libglib2.0-dev (>= 2.22), liborc-0.4-dev (>= 1:0.4.11), libcairo2-dev, libcaca-dev, libspeex-dev (>= 1.1.6), libpng12-dev, libshout3-dev, libjpeg62-dev (>= 6b), libaa1-dev (>= 1.4p5), libflac-dev (>= 1.1.4), libdv4-dev | libdv-dev, libgconf2-dev, libxdamage-dev, libxext-dev, libxfixes-dev, libxv-dev, libxml2-dev, libgtk2.0-dev (>= 2.8), libtag1-dev (>= 1.5), libwavpack-dev (>= 4.20), gstreamer-tools (= $BASEVERSION~git$DATE), gstreamer0.10-plugins-base (= $BASEVERSION~git$DATE), libsoup-gnome2.4-dev (>= 2.26), libpulse-dev (>= 0.9.20), libbz2-dev, gstreamer0.10-doc, gstreamer0.10-plugins-base-doc, libjack-dev (>= 0.99.10)
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
  71531d2a5bd3116db2ef7de51a2ace8a 30349 gst-plugins-good0.10_$GOODVERSION~git$DATE.debian.tar.gz
@@ -182,7 +199,7 @@ EOF
 cat debian/changelog >> debian/changelog-new
 mv debian/changelog-new debian/changelog
 
-fakeroot debian/rules binary
+build
 
 # Build gst-plugins-good
 ###############################################################################
@@ -190,7 +207,8 @@ cd ~/gstreamer-debs
 
 BADVERSION=0.10.22.1
 
-git clone git://anongit.freedesktop.org/gstreamer/gst-plugins-bad
+#git clone git://anongit.freedesktop.org/gstreamer/gst-plugins-bad
+git clone $ROOT/gst-plugins-bad/.git
 cd gst-plugins-bad
 patch -p1 < $ROOT/libtoolize.patch
 ./autogen.sh
@@ -205,9 +223,9 @@ cp gst-plugins-bad/gst-plugins-bad-$BADVERSION.tar.gz $TAR
 TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
-DSC=gst-plugins-bad0.10_$BADVERSION~git$DATE.dsc
 cp $ROOT/gst-plugins-bad-debian.tar.gz gst-plugins-bad0.10_$BADVERSION~git$DATE.debian.tar.gz
 
+DSC=gst-plugins-bad0.10_$BADVERSION~git$DATE.dsc
 cat > $DSC <<EOF 
 Format: 3.0 (quilt)
 Source: gst-plugins-bad0.10
@@ -217,7 +235,7 @@ Version: $BADVERSION~git$DATE
 Maintainer: Maintainers of GStreamer packages <pkg-gstreamer-maintainers@lists.alioth.debian.org>
 Uploaders: Sebastian Dröge <slomo@debian.org>, Sjoerd Simons <sjoerd@debian.org>
 Standards-Version: 3.8.4
-Build-Depends: autopoint | gettext, autotools-dev, cdbs (>= 0.4.32), debhelper (>= 7), dh-autoreconf, dpkg-dev (>= 1.15.1), flite-dev, libasound2-dev (>= 0.9.1) [linux-any], libcdaudio-dev [linux-any], libdc1394-22-dev (>= 2.0.0) [linux-any], libgstreamer0.10-dev (>= $BASEVERSION), gstreamer0.10-doc, gstreamer0.10-plugins-base (>= $BASEVERSION), gstreamer0.10-plugins-base-doc, gstreamer-tools (>= $BASEVERSION), gtk-doc-tools, ladspa-sdk, libass-dev (>= 0.9.4), libbz2-dev, libcairo2-dev, libcelt-dev (>= 0.5.0), libdca-dev, libdirac-dev (>= 0.10), libdirectfb-dev (>= 0.9.25), libdvdnav-dev (>= 4.1.2) [!hurd-any], libexempi-dev, libexif-dev (>= 0.6.16), libfaad-dev, libglib2.0-dev (>= 2.22), libgme-dev, libgsm1-dev, libgstreamer-plugins-base0.10-dev (>= $BASEVERSION), libgtk2.0-dev (>= 2.14.0), libiptcdata0-dev (>= 1.0.2), libjasper-dev, libkate-dev (>= 0.1.7), libmimic-dev (>= 1.0), libmms-dev (>= 0.4), libmodplug-dev, libmpcdec-dev, libmusicbrainz4-dev (>= 2.1.0), libofa0-dev (>= 0.9.3), libopenspc-dev [i386], liborc-0.4-dev (>= 1:0.4.11), libpng12-dev, librsvg2-dev (>= 2.14.0), librtmp-dev, libschroedinger-dev (>= 1.0.7), libsdl1.2-dev, libslv2-dev (>= 0.6.6), libsndfile1-dev (>= 1.0.16), libsoundtouch1-dev, libssl-dev, libvpx-dev, libwildmidi-dev (>= 0.2.3), libx11-dev, lv2core, pkg-config (>= 0.11.0)
+Build-Depends: autopoint | gettext, autotools-dev, cdbs (>= 0.4.32), debhelper (>= 7), dh-autoreconf, dpkg-dev (>= 1.15.1), flite-dev, libasound2-dev (>= 0.9.1) [linux-any], libcdaudio-dev [linux-any], libdc1394-22-dev (>= 2.0.0) [linux-any], libgstreamer0.10-dev (= $BASEVERSION~git$DATE), gstreamer0.10-doc, gstreamer0.10-plugins-base (= $BASEVERSION~git$DATE), gstreamer0.10-plugins-base-doc, gstreamer-tools (= $BASEVERSION~git$DATE), gtk-doc-tools, ladspa-sdk, libass-dev (>= 0.9.4), libbz2-dev, libcairo2-dev, libcelt-dev (>= 0.5.0), libdca-dev, libdirac-dev (>= 0.10), libdirectfb-dev (>= 0.9.25), libdvdnav-dev (>= 4.1.2) [!hurd-any], libexempi-dev, libexif-dev (>= 0.6.16), libfaad-dev, libglib2.0-dev (>= 2.22), libgme-dev, libgsm1-dev, libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE), libgtk2.0-dev (>= 2.14.0), libiptcdata0-dev (>= 1.0.2), libjasper-dev, libkate-dev (>= 0.1.7), libmimic-dev (>= 1.0), libmms-dev (>= 0.4), libmodplug-dev, libmpcdec-dev, libmusicbrainz4-dev (>= 2.1.0), libofa0-dev (>= 0.9.3), libopenspc-dev [i386], liborc-0.4-dev (>= 1:0.4.11), libpng12-dev, librsvg2-dev (>= 2.14.0), librtmp-dev, libschroedinger-dev (>= 1.0.7), libsdl1.2-dev, libslv2-dev (>= 0.6.6), libsndfile1-dev (>= 1.0.16), libsoundtouch1-dev, libssl-dev, libvpx-dev, libwildmidi-dev (>= 0.2.3), libx11-dev, lv2core, pkg-config (>= 0.11.0)
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
  3a87f741df05dcb7fe5723b22dc40969 20372 gst-plugins-bad0.10_$BADVERSION~git$DATE.debian.tar.gz
@@ -236,7 +254,7 @@ EOF
 cat debian/changelog >> debian/changelog-new
 mv debian/changelog-new debian/changelog
 
-fakeroot debian/rules binary
+build
 
 
 # Build gst-plugins-ugly
@@ -260,9 +278,9 @@ cp gst-plugins-ugly/gst-plugins-ugly-$UGLYVERSION.tar.gz $TAR
 TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
-DSC=gst-plugins-ugly0.10_$UGLYVERSION~git$DATE.dsc
 cp $ROOT/gst-plugins-ugly-debian.tar.gz gst-plugins-ugly0.10_$UGLYVERSION~git$DATE.debian.tar.gz
 
+DSC=gst-plugins-ugly0.10_$UGLYVERSION~git$DATE.dsc
 cat > $DSC <<EOF 
 Format: 3.0 (quilt)
 Source: gst-plugins-ugly0.10
@@ -272,7 +290,7 @@ Version: $UGLYVERSION~git$DATE
 Maintainer: Maintainers of GStreamer packages <pkg-gstreamer-maintainers@lists.alioth.debian.org>
 Uploaders: Loic Minier <lool@dooz.org>, Sebastian Dröge <slomo@debian.org>
 Standards-Version: 3.8.4
-Build-Depends: autopoint | gettext, autotools-dev, cdbs (>= 0.4.20), debhelper (>= 7), dh-autoreconf, dpkg-dev (>= 1.15.1), libgstreamer0.10-dev (>= $BASEVERSION), gstreamer0.10-doc, gstreamer0.10-plugins-base, gstreamer0.10-plugins-base-doc, gstreamer-tools (>= $BASEVERSION), gtk-doc-tools, liba52-0.7.4-dev, libcdio-dev (>= 0.76), libdvdread-dev (>= 0.9.0), libglib2.0-dev (>= 2.20), libgstreamer-plugins-base0.10-dev (>= $BASEVERSION), libid3tag0-dev, libmad0-dev (>= 0.15), libmpeg2-4-dev (>= 0.4.0), libopencore-amrnb-dev, libopencore-amrwb-dev, liborc-0.4-dev (>= 1:0.4.6), libsidplay1-dev, libtwolame-dev (>= 0.3.10), pkg-config (>= 0.11.0)
+Build-Depends: autopoint | gettext, autotools-dev, cdbs (>= 0.4.20), debhelper (>= 7), dh-autoreconf, dpkg-dev (>= 1.15.1), libgstreamer0.10-dev (= $BASEVERSION~git$DATE), gstreamer0.10-doc, gstreamer0.10-plugins-base, gstreamer0.10-plugins-base-doc, gstreamer-tools (= $BASEVERSION~git$DATE), gtk-doc-tools, liba52-0.7.4-dev, libcdio-dev (>= 0.76), libdvdread-dev (>= 0.9.0), libglib2.0-dev (>= 2.20), libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE), libid3tag0-dev, libmad0-dev (>= 0.15), libmpeg2-4-dev (>= 0.4.0), libopencore-amrnb-dev, libopencore-amrwb-dev, liborc-0.4-dev (>= 1:0.4.6), libsidplay1-dev, libtwolame-dev (>= 0.3.10), pkg-config (>= 0.11.0)
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
  7ccb867c72f4ddc3606167077f9b9787 26391 gst-plugins-ugly0.10_$UGLYVERSION~git$DATE.debian.tar.gz
@@ -292,5 +310,116 @@ EOF
 cat debian/changelog >> debian/changelog-new
 mv debian/changelog-new debian/changelog
 
-fakeroot debian/rules binary
+build
 
+# Build gst-ffmpeg
+###############################################################################
+cd ~/gstreamer-debs
+
+FFMPEGVERSION=0.10.11.2
+
+git clone git://anongit.freedesktop.org/gstreamer/gst-ffmpeg
+cd gst-ffmpeg
+patch -p1 < $ROOT/libtoolize.patch
+./autogen.sh
+make
+make dist
+cd ..
+
+TAR=gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.orig.tar.gz
+
+cp gst-ffmpeg/gst-ffmpeg-$FFMPEGVERSION.tar.gz $TAR
+
+TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
+TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
+
+cp $ROOT/gstreamer-ffmpeg-debian.tar.gz gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.debian.tar.gz
+
+DSC=gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.dsc
+cat > $DSC <<EOF
+Format: 3.0 (quilt)
+Source: gstreamer0.10-ffmpeg
+Binary: gstreamer0.10-ffmpeg, gstreamer0.10-ffmpeg-dbg
+Architecture: any
+Version: $FFMPEGVERSION~git$DATE
+Maintainer: Maintainers of GStreamer packages <pkg-gstreamer-maintainers@lists.alioth.debian.org>
+Uploaders: David I. Lehn <dlehn@debian.org>,           Loic Minier <lool@dooz.org>,           Sebastian Dröge <slomo@debian.org>,           Sjoerd Simons <sjoerd@debian.org>
+Standards-Version: 3.8.4
+Build-Depends: debhelper (>= 7), cdbs (>= 0.4.8), autotools-dev, zlib1g-dev, libglib2.0-dev (>= 2.4.0), pkg-config (>= 0.11.0), libgstreamer0.10-dev (= $BASEVERSION~git$DATE), libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE), liborc-0.4-dev (>= 0.4.5), gstreamer-tools (= $BASEVERSION~git$DATE), libbz2-dev, lsb-release
+Files: 
+ $TAR_MD5 $TAR_SIZE $TAR
+ 134541939457e654f5dde561da0b1a86 9344 gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.debian.tar.gz
+EOF
+
+dpkg-source -x $DSC
+cd gstreamer0.10-ffmpeg-$FFMPEGVERSION~git$DATE
+cat > debian/changelog-new <<EOF
+gstreamer0.10-ffmpeg ($FFMPEGVERSION~git$DATE) lucid; urgency=low
+
+  * gstreamer from git on $DATE
+
+ -- Tim Ansell <mithro@mithis.com>  $DATE_LONG
+
+EOF
+cat debian/changelog >> debian/changelog-new
+mv debian/changelog-new debian/changelog
+
+build
+
+# Build gst-python
+###############################################################################
+cd ~/gstreamer-debs
+
+PYTHONVERSION=0.10.21.1
+
+git clone git://anongit.freedesktop.org/gstreamer/gst-python
+cd gst-python
+patch -p1 < $ROOT/libtoolize.patch
+./autogen.sh
+make
+make dist
+cd ..
+
+TAR=gst0.10-python_$PYTHONVERSION~git$DATE.orig.tar.gz
+
+cp gst-python/gst-python-$PYTHONVERSION.tar.gz $TAR
+
+TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
+TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
+
+cp $ROOT/gst-python-debian.tar.gz gst0.10-python_$PYTHONVERSION~git$DATE.debian.tar.gz
+
+DSC=gst0.10-python_$PYTHONVERSION~git$DATE.dsc
+cat > $DSC <<EOF
+Format: 3.0 (quilt)
+Source: gst0.10-python
+Binary: python-gst0.10, python-gst0.10-dev, python-gst0.10-dbg
+Architecture: any
+Version: $PYTHONVERSION~git$DATE
+Maintainer: Maintainers of GStreamer packages <pkg-gstreamer-maintainers@lists.alioth.debian.org>
+Uploaders: Loic Minier <lool@dooz.org>,           Sebastian Dröge <slomo@debian.org>
+Homepage: http://gstreamer.freedesktop.org
+Standards-Version: 3.8.4
+Build-Depends: debhelper (>= 7), pkg-config, libgstreamer0.10-dev (= $BASEVERSION~git$DATE), libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE), gstreamer0.10-plugins-base, libxml2-utils, xmlto, libx11-dev, python-dev, python-gobject-dev (>= 2.11.2), python-gobject-dbg, python-all-dev (>= 2.3.5-11), python-all-dbg, python-central (>= 0.6.11), autotools-dev
+Python-Version: >= 2.3
+Files: 
+ $TAR_MD5 $TAR_SIZE $TAR
+ 5e376af97c5e2ad3a64cd96b5148d29f 10060 gst0.10-python_$PYTHONVERSION~git$DATE.debian.tar.gz
+EOF
+
+dpkg-source -x $DSC
+cd gst0.10-python-$PYTHONVERSION~git$DATE
+cat > debian/changelog-new <<EOF
+gst0.10-python ($PYTHONVERSION~git$DATE) lucid; urgency=low
+
+  * gstreamer from git on $DATE
+
+ -- Tim Ansell <mithro@mithis.com>  $DATE_LONG
+
+EOF
+cat debian/changelog >> debian/changelog-new
+mv debian/changelog-new debian/changelog
+
+build
+
+dput timsvideo *$DATE_source.changes
