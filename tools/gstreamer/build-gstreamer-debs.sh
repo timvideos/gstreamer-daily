@@ -1,14 +1,18 @@
 #! /bin/sh
 
+if [ x$GPG_AGENT_INFO = x ]; then
+	eval $(gpg-agent --daemon)
+fi
+
 set -e
 
-GPGKEY=0x090AC729
 DATE=`date -u +%Y%m%d%H%M%S`
 DATE_LONG=`date -u -R`
 BASEVERSION=0.10.35.1
 ROOT=`pwd`
-BUILD=0
+BUILD=1
 
+# Build the packages for upload (and possibly build a local version too)
 function build {
 	if [ $BUILD -eq 1 ]; then 
 		fakeroot debian/rules binary
@@ -16,6 +20,52 @@ function build {
 	debuild -S -sa -k$GPGKEY
 }
 
+function getsource {
+	TMP=`pwd`
+	if [ -d $ROOT/repos/common ]; then
+		cd $ROOT/repos/common
+		git pull || true
+	else
+		cd $ROOT/repos
+		git clone git://anongit.freedesktop.org/git/gstreamer/common
+	fi
+
+	if [ -d $ROOT/repos/$1 ]; then
+		cd $ROOT/repos/$1
+		git pull || true
+	else
+		cd $ROOT/repos
+		git clone git://anongit.freedesktop.org/git/gstreamer/$1
+	fi
+
+	cd $TMP
+	git clone $ROOT/repos/$1/.git
+	cd $1
+	if [ -e common ]; then
+		echo "Rewriting common"
+		sed -e"s-git://anongit.freedesktop.org/gstreamer/common-$ROOT/repos/common/.git-" -i .gitmodules
+	fi
+	if [ x$2 = libtoolize.patch ]; then
+		patch -p1 < $ROOT/libtoolize.patch
+	fi
+	./autogen.sh
+	make
+	make dist
+	cd $TMP
+}
+
+function bumplog {
+	cat > debian/changelog-new <<EOF
+$1 ($2~git$DATE) lucid; urgency=low
+
+  * $1 from git on $DATE
+
+ -- Tim Ansell <mithro@mithis.com>  $DATE_LONG
+
+EOF
+	cat debian/changelog >> debian/changelog-new
+	mv debian/changelog-new debian/changelog
+}
 
 echo $DATE
 
@@ -28,12 +78,7 @@ cd gstreamer-debs
 
 # Build the core gstreamer
 ###############################################################################
-git clone git://anongit.freedesktop.org/git/gstreamer/gstreamer
-cd gstreamer
-./autogen.sh
-make
-make dist
-cd ..
+getsource $1 gstreamer
 
 tar -jxvf gstreamer/gstreamer-$BASEVERSION.tar.bz2
 mv gstreamer-$BASEVERSION gstreamer0.10-$BASEVERSION
@@ -68,17 +113,8 @@ EOF
 dpkg-source -x $DSC
 
 cd gstreamer0.10-$BASEVERSION~git$DATE
-cat > debian/changelog-new <<EOF
-gstreamer0.10 ($BASEVERSION~git$DATE) lucid; urgency=low
 
-  * gstreamer from git on $DATE
-
- -- Tim Ansell <mithro@mithis.com>  $DATE_LONG
-
-EOF
-cat debian/changelog >> debian/changelog-new
-mv debian/changelog-new debian/changelog
-
+bumplog gstreamer0.10 $BASEVERSION
 build
 
 if [ $BUILD -eq 1 ]; then 
@@ -91,12 +127,7 @@ fi
 ###############################################################################
 cd ~/gstreamer-debs
 
-git clone git://anongit.freedesktop.org/gstreamer/gst-plugins-base
-cd gst-plugins-base
-./autogen.sh
-make
-make dist
-cd ..
+getsource $1 gst-plugins-base 
 
 TAR=gst-plugins-base0.10_$BASEVERSION~git$DATE.orig.tar.gz
 
@@ -121,25 +152,13 @@ Standards-Version: 3.8.4
 Build-Depends: libgstreamer0.10-dev (= $BASEVERSION~git$DATE), libasound2-dev (>= 0.9.0) [linux-any], libgudev-1.0-dev (>= 143) [linux-any], autotools-dev, dh-autoreconf, autopoint | gettext, cdbs (>= 0.4.20), debhelper (>= 7), gnome-pkg-tools (>= 0.7), pkg-config (>= 0.11.0), libxv-dev (>= 6.8.2.dfsg.1-3), libxt-dev (>= 6.8.2.dfsg.1-3), libvorbis-dev (>= 1.0.0-2), libcdparanoia-dev (>= 3.10.2) [!hurd-i386], libgnomevfs2-dev (>= 1:2.20.0-2), liborc-0.4-dev (>= 1:0.4.11), libpango1.0-dev (>= 1.16.0), libtheora-dev (>= 1.1), libglib2.0-dev (>= 2.22), libxml2-dev (>= 2.4.23), zlib1g-dev (>= 1:1.1.4), libvisual-0.4-dev (>= 0.4.0), gstreamer-tools (= $BASEVERSION~git$DATE), dpkg-dev (>= 1.15.1), iso-codes, libgtk2.0-dev (>= 2.12.0), libglib2.0-doc, gstreamer0.10-doc, libgirepository1.0-dev (>= 0.6.3), gobject-introspection (>= 0.6.5), gir1.0-glib-2.0, gir1.0-freedesktop, gir1.0-gstreamer-0.10
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
- bc99a450f05e4ca4cebc2d6b75ed7c31 40377 gst-plugins-base0.10_$BASEVERSION~git$DATE.debian.tar.gz
+ d45c425b6a76ce27ee8435151e3c58c2 38805 gst-plugins-base0.10_$BASEVERSION~git$DATE.debian.tar.gz
 EOF
 
-debuild -S -sa -k$GPGKEY
-cd ..
-dput timsvideo gstreamer0.10_$BASEVERSION~git$DATE_source.changes
+dpkg-source -x $DSC
 
 cd gst-plugins-base0.10-$BASEVERSION~git$DATE
-cat > debian/changelog-new <<EOF
-gst-plugins-base0.10 ($BASEVERSION~git$DATE) lucid; urgency=low
-
-  * gstreamer from git on $DATE
-
- -- Tim Ansell <mithro@mithis.com>  $DATE_LONG
-
-EOF
-cat debian/changelog >> debian/changelog-new
-mv debian/changelog-new debian/changelog
-
+bumplog gst-plugins-base0.10 $BASEVERSION
 build
 
 if [ $BUILD -eq 1 ]; then 
@@ -153,12 +172,7 @@ cd ~/gstreamer-debs
 
 GOODVERSION=0.10.30.1
 
-git clone git://anongit.freedesktop.org/gstreamer/gst-plugins-good
-cd gst-plugins-good
-./autogen.sh
-make
-make dist
-cd ..
+getsource $1 gst-plugins-good
 
 TAR=gst-plugins-good0.10_$GOODVERSION~git$DATE.orig.tar.gz
 
@@ -188,20 +202,10 @@ EOF
 dpkg-source -x $DSC
 
 cd gst-plugins-good0.10-$GOODVERSION~git$DATE
-cat > debian/changelog-new <<EOF
-gst-plugins-good0.10 ($GOODVERSION~git$DATE) lucid; urgency=low
-
-  * gstreamer from git on $DATE
-
- -- Tim Ansell <mithro@mithis.com>  $DATE_LONG
-
-EOF
-cat debian/changelog >> debian/changelog-new
-mv debian/changelog-new debian/changelog
-
+bumplog gst-plugins-good0.10 $GOODVERSION
 build
 
-# Build gst-plugins-good
+# Build gst-plugins-bad
 ###############################################################################
 cd ~/gstreamer-debs
 
@@ -242,18 +246,9 @@ Files:
 EOF
 
 dpkg-source -x $DSC
+
 cd gst-plugins-bad0.10-$BADVERSION~git$DATE
-cat > debian/changelog-new <<EOF
-gst-plugins-bad0.10 ($BADVERSION~git$DATE) lucid; urgency=low
-
-  * gstreamer from git on $DATE
-
- -- Tim Ansell <mithro@mithis.com>  $DATE_LONG
-
-EOF
-cat debian/changelog >> debian/changelog-new
-mv debian/changelog-new debian/changelog
-
+bumplog gst-plugins-bad0.10 $BADVERSION
 build
 
 
@@ -263,13 +258,7 @@ cd ~/gstreamer-debs
 
 UGLYVERSION=0.10.18.1
 
-git clone git://anongit.freedesktop.org/gstreamer/gst-plugins-ugly
-cd gst-plugins-ugly
-patch -p1 < $ROOT/libtoolize.patch
-./autogen.sh
-make
-make dist
-cd ..
+getsource $1 gst-plugins-ugly libtoolize.patch
 
 TAR=gst-plugins-ugly0.10_$UGLYVERSION~git$DATE.orig.tar.gz
 
@@ -298,18 +287,9 @@ EOF
 
 
 dpkg-source -x $DSC
+
 cd gst-plugins-ugly0.10-$UGLYVERSION~git$DATE
-cat > debian/changelog-new <<EOF
-gst-plugins-ugly0.10 ($UGLYVERSION~git$DATE) lucid; urgency=low
-
-  * gstreamer from git on $DATE
-
- -- Tim Ansell <mithro@mithis.com>  $DATE_LONG
-
-EOF
-cat debian/changelog >> debian/changelog-new
-mv debian/changelog-new debian/changelog
-
+bumplog gst-plugins-ugly0.10 $UGLYVERSION
 build
 
 # Build gst-ffmpeg
@@ -318,13 +298,7 @@ cd ~/gstreamer-debs
 
 FFMPEGVERSION=0.10.11.2
 
-git clone git://anongit.freedesktop.org/gstreamer/gst-ffmpeg
-cd gst-ffmpeg
-patch -p1 < $ROOT/libtoolize.patch
-./autogen.sh
-make
-make dist
-cd ..
+getsource $1 gst-ffmpeg libtoolize.patch
 
 TAR=gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.orig.tar.gz
 
@@ -352,18 +326,9 @@ Files:
 EOF
 
 dpkg-source -x $DSC
+
 cd gstreamer0.10-ffmpeg-$FFMPEGVERSION~git$DATE
-cat > debian/changelog-new <<EOF
-gstreamer0.10-ffmpeg ($FFMPEGVERSION~git$DATE) lucid; urgency=low
-
-  * gstreamer from git on $DATE
-
- -- Tim Ansell <mithro@mithis.com>  $DATE_LONG
-
-EOF
-cat debian/changelog >> debian/changelog-new
-mv debian/changelog-new debian/changelog
-
+bumplog gstreamer0.10-ffmpeg $FFMPEGVERSION
 build
 
 # Build gst-python
@@ -372,13 +337,7 @@ cd ~/gstreamer-debs
 
 PYTHONVERSION=0.10.21.1
 
-git clone git://anongit.freedesktop.org/gstreamer/gst-python
-cd gst-python
-patch -p1 < $ROOT/libtoolize.patch
-./autogen.sh
-make
-make dist
-cd ..
+getsource $1 gst-python libtoolize.patch
 
 TAR=gst0.10-python_$PYTHONVERSION~git$DATE.orig.tar.gz
 
@@ -409,17 +368,10 @@ EOF
 
 dpkg-source -x $DSC
 cd gst0.10-python-$PYTHONVERSION~git$DATE
-cat > debian/changelog-new <<EOF
-gst0.10-python ($PYTHONVERSION~git$DATE) lucid; urgency=low
-
-  * gstreamer from git on $DATE
-
- -- Tim Ansell <mithro@mithis.com>  $DATE_LONG
-
-EOF
-cat debian/changelog >> debian/changelog-new
-mv debian/changelog-new debian/changelog
-
+bumplog gst0.10-python $PYTHONVERSION
 build
 
-dput timsvideo *$DATE_source.changes
+###############################################################################
+# Upload the changes to the PPA
+###############################################################################
+dput timsvideo *${DATE}_source.changes
