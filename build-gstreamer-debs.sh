@@ -1,23 +1,19 @@
-#! /bin/sh
-
-if [ x$GPG_AGENT_INFO = x ]; then
-	eval $(gpg-agent --daemon)
-fi
+#! /bin/bash
 
 set -e
 
 DATE=`date -u +%Y%m%d%H%M%S`
 DATE_LONG=`date -u -R`
-BASEVERSION=0.10.35.1
 ROOT=`pwd`
 BUILD=1
+OUTPUT=/tmp/packages/gstreamer
 
 # Build the packages for upload (and possibly build a local version too)
 function build {
 	if [ $BUILD -eq 1 ]; then 
 		fakeroot debian/rules binary
 	fi
-	debuild -S -sa -k$GPGKEY
+	debuild -S -us -uc
 }
 
 function getsource {
@@ -43,7 +39,7 @@ function getsource {
 	cd $1
 	if [ -e common ]; then
 		echo "Rewriting common"
-		sed -e"s-git://anongit.freedesktop.org/gstreamer/common-$ROOT/repos/common/.git-" -i .gitmodules
+		sed -e"s~git://anongit.freedesktop.org/gstreamer/common~$ROOT/repos/common/.git~" -i .gitmodules
 	fi
 	if [ x$2 = libtoolize.patch ]; then
 		patch -p1 < $ROOT/libtoolize.patch
@@ -69,16 +65,46 @@ EOF
 
 echo $DATE
 
-cd ~/
-if [ -d gstreamer-debs ]; then
- rm -rf gstreamer-debs
+if [ ! -d $ROOT/repos ]; then
+	mkdir -p $ROOT/repos
 fi
-mkdir gstreamer-debs
-cd gstreamer-debs
+
+if [ -d $OUTPUT ]; then
+ rm -rf $OUTPUT
+fi
+mkdir $OUTPUT
+
+## # Build the core gstreamer
+## ###############################################################################
+## cd $OUTPUT
+## 
+## if [ -d temp ]; then
+## 	rm -rf temp
+## fi
+## 
+## for i in $ROOT/depends/*.dsc; do
+## 	(
+## 		mkdir temp
+## 		cd temp
+## 		dpkg-source -x $i tobuild
+## 		cd tobuild
+## 		fakeroot debian/rules binary
+## 		cd ..
+## 		dpkg --install *.deb
+## 	)
+## 	rm -rf temp
+## done
+
+apt-add-repository ppa:mithro/streamtime
+apt-get update
+apt-get install librtmp-dev
 
 # Build the core gstreamer
 ###############################################################################
-getsource $1 gstreamer
+cd $OUTPUT
+
+BASEVERSION=0.10.35.1
+getsource gstreamer
 
 tar -jxvf gstreamer/gstreamer-$BASEVERSION.tar.bz2
 mv gstreamer-$BASEVERSION gstreamer0.10-$BASEVERSION
@@ -119,21 +145,20 @@ build
 
 if [ $BUILD -eq 1 ]; then 
 	cd ..
-	sudo dpkg --install gir1.0-* lib*.deb
-	sudo dpkg --install gstreamer0.10-tools*.deb
+	dpkg --install gir1.0-* lib*.deb
+	dpkg --install gstreamer0.10-tools*.deb
 fi
 
 # Build gst-plugins-base
 ###############################################################################
-cd ~/gstreamer-debs
+cd $OUTPUT
 
-getsource $1 gst-plugins-base 
+BASEVERSION=0.10.35.1
+getsource gst-plugins-base 
 
 TAR=gst-plugins-base0.10_$BASEVERSION~git$DATE.orig.tar.gz
-
 cp gst-plugins-base/gst-plugins-base-$BASEVERSION.tar.gz $TAR
-
-TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
+TAR_MD5=`md5sum $TAR | sed -e's: .*::'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
 cp $ROOT/gst-plugins-base-debian.tar.gz gst-plugins-base0.10_$BASEVERSION~git$DATE.debian.tar.gz
@@ -163,21 +188,18 @@ build
 
 if [ $BUILD -eq 1 ]; then 
 	cd ..
-	sudo dpkg --install gir1.0-*base* lib*base*.deb
+	dpkg --install gir1.0-*base* lib*base*.deb
 fi
 
 # Build gst-plugins-good
 ###############################################################################
-cd ~/gstreamer-debs
+cd $OUTPUT
 
 GOODVERSION=0.10.30.1
-
-getsource $1 gst-plugins-good
+getsource gst-plugins-good
 
 TAR=gst-plugins-good0.10_$GOODVERSION~git$DATE.orig.tar.gz
-
 cp gst-plugins-good/gst-plugins-good-$GOODVERSION.tar.gz $TAR
-
 TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
@@ -207,10 +229,8 @@ build
 
 # Build gst-plugins-bad
 ###############################################################################
-cd ~/gstreamer-debs
-
+cd $OUTPUT
 BADVERSION=0.10.22.1
-
 #git clone git://anongit.freedesktop.org/gstreamer/gst-plugins-bad
 git clone $ROOT/gst-plugins-bad/.git
 cd gst-plugins-bad
@@ -221,9 +241,7 @@ make dist
 cd ..
 
 TAR=gst-plugins-bad0.10_$BADVERSION~git$DATE.orig.tar.gz
-
 cp gst-plugins-bad/gst-plugins-bad-$BADVERSION.tar.gz $TAR
-
 TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
@@ -254,16 +272,13 @@ build
 
 # Build gst-plugins-ugly
 ###############################################################################
-cd ~/gstreamer-debs
-
+cd $OUTPUT
 UGLYVERSION=0.10.18.1
 
-getsource $1 gst-plugins-ugly libtoolize.patch
+getsource gst-plugins-ugly libtoolize.patch
 
 TAR=gst-plugins-ugly0.10_$UGLYVERSION~git$DATE.orig.tar.gz
-
 cp gst-plugins-ugly/gst-plugins-ugly-$UGLYVERSION.tar.gz $TAR
-
 TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
@@ -294,16 +309,12 @@ build
 
 # Build gst-ffmpeg
 ###############################################################################
-cd ~/gstreamer-debs
-
+cd $OUTPUT
 FFMPEGVERSION=0.10.11.2
-
-getsource $1 gst-ffmpeg libtoolize.patch
+getsource gst-ffmpeg libtoolize.patch
 
 TAR=gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.orig.tar.gz
-
 cp gst-ffmpeg/gst-ffmpeg-$FFMPEGVERSION.tar.gz $TAR
-
 TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
@@ -333,16 +344,12 @@ build
 
 # Build gst-python
 ###############################################################################
-cd ~/gstreamer-debs
-
+cd $OUTPUT
 PYTHONVERSION=0.10.21.1
-
-getsource $1 gst-python libtoolize.patch
+getsource gst-python libtoolize.patch
 
 TAR=gst0.10-python_$PYTHONVERSION~git$DATE.orig.tar.gz
-
 cp gst-python/gst-python-$PYTHONVERSION.tar.gz $TAR
-
 TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
@@ -370,8 +377,3 @@ dpkg-source -x $DSC
 cd gst0.10-python-$PYTHONVERSION~git$DATE
 bumplog gst0.10-python $PYTHONVERSION
 build
-
-###############################################################################
-# Upload the changes to the PPA
-###############################################################################
-dput timsvideo *${DATE}_source.changes
