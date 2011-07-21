@@ -1,6 +1,6 @@
 MIRRORSITE=http://localhost:9999/ubuntu/
 # ccache
-EXTRAPACKAGES="ccache git-core cvs python-software-properties indent DEPENDS"
+EXTRAPACKAGES="ccache git-core cvs python-software-properties indent fakeroot DEPENDS"
 BINDMOUNTS="${CCACHE_DIR} GSTREAMER_DIR /tmp/packages"
 # add universe/multiverse
 COMPONENTS="main restricted universe multiverse"
