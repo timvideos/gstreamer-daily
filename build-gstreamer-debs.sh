@@ -6,7 +6,7 @@ DATE=`date -u +%Y%m%d%H%M%S`
 DATE_LONG=`date -u -R`
 ROOT=`pwd`
 BUILD=1
-OUTPUT=/tmp/packages/gstreamer
+OUTPUT=/tmp/packages/gstreamer$DATE
 
 # Build the packages for upload (and possibly build a local version too)
 function build {
@@ -319,7 +319,7 @@ Version: $FFMPEGVERSION~git$DATE
 Maintainer: Maintainers of GStreamer packages <pkg-gstreamer-maintainers@lists.alioth.debian.org>
 Uploaders: David I. Lehn <dlehn@debian.org>,           Loic Minier <lool@dooz.org>,           Sebastian Dröge <slomo@debian.org>,           Sjoerd Simons <sjoerd@debian.org>
 Standards-Version: 3.8.4
-Build-Depends: debhelper (>= 7), cdbs (>= 0.4.8), autotools-dev, zlib1g-dev, libglib2.0-dev (>= 2.4.0), pkg-config (>= 0.11.0), libgstreamer0.10-dev (= $BASEVERSION~git$DATE), libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE), liborc-0.4-dev (>= 0.4.5), gstreamer-tools (= $BASEVERSION~git$DATE), libbz2-dev, lsb-release
+Build-Depends: debhelper (>= 7), cdbs (>= 0.4.8), autotools-dev, zlib1g-dev, libglib2.0-dev (>= 2.4.0), pkg-config (>= 0.11.0), libgstreamer0.10-dev (= $BASEVERSION~git$DATE), libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE), liborc-0.4-dev (>= 0.4.5), gstreamer-tools (= $BASEVERSION~git$DATE), libbz2-dev, lsb-release, yasm
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
  134541939457e654f5dde561da0b1a86 9344 gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.debian.tar.gz
