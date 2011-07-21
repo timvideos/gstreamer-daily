@@ -227,14 +227,7 @@ build
 ###############################################################################
 cd $OUTPUT
 BADVERSION=0.10.22.1
-#git clone git://anongit.freedesktop.org/gstreamer/gst-plugins-bad
-git clone $ROOT/gst-plugins-bad/.git
-cd gst-plugins-bad
-patch -p1 < $ROOT/libtoolize.patch
-./autogen.sh
-make
-make dist
-cd ..
+getsource gst-plugins-bad libtoolize.patch
 
 TAR=gst-plugins-bad0.10_$BADVERSION~git$DATE.orig.tar.gz
 cp gst-plugins-bad/gst-plugins-bad-$BADVERSION.tar.gz $TAR
