@@ -299,7 +299,7 @@ build
 # Build gst-ffmpeg
 ###############################################################################
 cd $OUTPUT
-FFMPEGVERSION=0.10.11.2
+FFMPEGVERSION=0.10.12
 getsource gst-ffmpeg libtoolize.patch
 
 TAR=gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.orig.tar.gz
