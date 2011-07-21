@@ -95,10 +95,6 @@ mkdir $OUTPUT
 ## 	rm -rf temp
 ## done
 
-apt-add-repository ppa:mithro/streamtime
-apt-get update
-apt-get install librtmp-dev
-
 # Build the core gstreamer
 ###############################################################################
 cd $OUTPUT
@@ -174,7 +170,7 @@ Maintainer: Maintainers of GStreamer packages <pkg-gstreamer-maintainers@lists.a
 Uploaders: Loic Minier <lool@dooz.org>, Sebastien Bacher <seb128@debian.org>, Sebastian Dröge <slomo@debian.org>, Sjoerd Simons <sjoerd@debian.org>
 Homepage: http://gstreamer.freedesktop.org
 Standards-Version: 3.8.4
-Build-Depends: libgstreamer0.10-dev (= $BASEVERSION~git$DATE), libasound2-dev (>= 0.9.0) [linux-any], libgudev-1.0-dev (>= 143) [linux-any], autotools-dev, dh-autoreconf, autopoint | gettext, cdbs (>= 0.4.20), debhelper (>= 7), gnome-pkg-tools (>= 0.7), pkg-config (>= 0.11.0), libxv-dev (>= 6.8.2.dfsg.1-3), libxt-dev (>= 6.8.2.dfsg.1-3), libvorbis-dev (>= 1.0.0-2), libcdparanoia-dev (>= 3.10.2) [!hurd-i386], libgnomevfs2-dev (>= 1:2.20.0-2), liborc-0.4-dev (>= 1:0.4.11), libpango1.0-dev (>= 1.16.0), libtheora-dev (>= 1.1), libglib2.0-dev (>= 2.22), libxml2-dev (>= 2.4.23), zlib1g-dev (>= 1:1.1.4), libvisual-0.4-dev (>= 0.4.0), gstreamer-tools (= $BASEVERSION~git$DATE), dpkg-dev (>= 1.15.1), iso-codes, libgtk2.0-dev (>= 2.12.0), libglib2.0-doc, gstreamer0.10-doc, libgirepository1.0-dev (>= 0.6.3), gobject-introspection (>= 0.6.5), gir1.0-glib-2.0, gir1.0-freedesktop, gir1.0-gstreamer-0.10
+Build-Depends: libgstreamer0.10-dev (= $BASEVERSION~git$DATE), libasound2-dev (>= 0.9.0) [linux-any], libgudev-1.0-dev (>= 143) [linux-any], autotools-dev, dh-autoreconf, autopoint | gettext, cdbs (>= 0.4.20), debhelper (>= 7), gnome-pkg-tools (>= 0.7), pkg-config (>= 0.11.0), libxv-dev (>= 6.8.2.dfsg.1-3), libxt-dev (>= 6.8.2.dfsg.1-3), libvorbis-dev (>= 1.0.0-2), libvorbisidec-dev (>= 1.0.0-2), libcdparanoia-dev (>= 3.10.2) [!hurd-i386], libgnomevfs2-dev (>= 1:2.20.0-2), liborc-0.4-dev (>= 1:0.4.11), libpango1.0-dev (>= 1.16.0), libtheora-dev (>= 1.1), libglib2.0-dev (>= 2.22), libxml2-dev (>= 2.4.23), zlib1g-dev (>= 1:1.1.4), libvisual-0.4-dev (>= 0.4.0), gstreamer-tools (= $BASEVERSION~git$DATE), dpkg-dev (>= 1.15.1), iso-codes, libgtk2.0-dev (>= 2.12.0), libglib2.0-doc, gstreamer0.10-doc, libgirepository1.0-dev (>= 0.6.3), gobject-introspection (>= 0.6.5), gir1.0-glib-2.0, gir1.0-freedesktop, gir1.0-gstreamer-0.10
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
  d45c425b6a76ce27ee8435151e3c58c2 38805 gst-plugins-base0.10_$BASEVERSION~git$DATE.debian.tar.gz
