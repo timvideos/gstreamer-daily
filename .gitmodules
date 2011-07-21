@@ -1,0 +1,3 @@
+[submodule "repos/gst-plugins-bad"]
+	path = repos/gst-plugins-bad
+	url = git://github.com/timsvideo/gst-plugins-bad.git
