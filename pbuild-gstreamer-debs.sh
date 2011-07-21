@@ -22,7 +22,7 @@ cd $PWD
 apt-add-repository ppa:mithro/streamtime
 apt-add-repository ppa:gstreamer-developers/ppa
 apt-get update
-apt-get upgrade
+apt-get -y upgrade
 apt-get install -y $(echo $(cat depends.ppa))
 ./build-gstreamer-debs.sh
 EOF
