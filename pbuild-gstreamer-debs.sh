@@ -11,7 +11,7 @@ fi
 cp $PWD/pbuilderrc ~/.pbuilderrc
 sed -i -e"s:GSTREAMER_DIR:$PWD:" -e"s/DEPENDS/$(echo $(cat depends.upstream))/" ~/.pbuilderrc
 cat ~/.pbuilderrc
-#pbuilder update --override-config
+pbuilder update --override-config
 
 cat > /tmp/gstreamer-build.sh <<EOF
 #! /bin/sh
