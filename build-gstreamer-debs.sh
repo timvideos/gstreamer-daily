@@ -2,11 +2,8 @@
 
 set -e
 
-DATE=`date -u +%Y%m%d%H%M%S`
-DATE_LONG=`date -u -R`
 ROOT=`pwd`
 BUILD=1
-OUTPUT=/tmp/packages/gstreamer$DATE
 
 # Build the packages for upload (and possibly build a local version too)
 function build {
