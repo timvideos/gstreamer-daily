@@ -2,11 +2,8 @@
 
 set -e
 
-DATE=`date -u +%Y%m%d%H%M%S`
-DATE_LONG=`date -u -R`
 ROOT=`pwd`
 BUILD=1
-OUTPUT=/tmp/packages/gstreamer$DATE
 
 # Build the packages for upload (and possibly build a local version too)
 function build {
@@ -310,7 +307,7 @@ build
 # Build gst-ffmpeg
 ###############################################################################
 cd $OUTPUT
-FFMPEGVERSION=0.10.11.2
+FFMPEGVERSION=0.10.12
 getsource gst-ffmpeg libtoolize.patch
 
 TAR=gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.orig.tar.gz
