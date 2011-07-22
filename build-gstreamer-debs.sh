@@ -63,6 +63,14 @@ EOF
 	mv debian/changelog-new debian/changelog
 }
 
+function fixdepends {
+	sed -i debian/control* \
+		-e ":^Build:s:libgstreamer0.10-dev [^,]*:libgstreamer0.10-dev (= $BASEVERSION~git$DATE):g" \
+		-e ":^Build:s:gstreamer-tools[^,]*:gstreamer-tools (= $BASEVERSION~git$DATE):g" \
+		-e ":^Build:s:libgstreamer-plugins-base0.10-dev[^,]*:libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE):g" \
+		-e ":^Build:s:gstreamer0.10-plugins-base[^,]*:gstreamer0.10-plugins-base (= $BASEVERSION~git$DATE):g"
+}
+
 echo $DATE
 
 if [ ! -d $ROOT/repos ]; then
@@ -135,7 +143,6 @@ EOF
 dpkg-source -x $DSC
 
 cd gstreamer0.10-$BASEVERSION~git$DATE
-
 bumplog gstreamer0.10 $BASEVERSION
 build
 
@@ -179,6 +186,7 @@ EOF
 dpkg-source -x $DSC
 
 cd gst-plugins-base0.10-$BASEVERSION~git$DATE
+fixcontrol
 bumplog gst-plugins-base0.10 $BASEVERSION
 build
 
@@ -220,6 +228,7 @@ EOF
 dpkg-source -x $DSC
 
 cd gst-plugins-good0.10-$GOODVERSION~git$DATE
+fixcontrol
 bumplog gst-plugins-good0.10 $GOODVERSION
 build
 
@@ -255,6 +264,7 @@ EOF
 dpkg-source -x $DSC
 
 cd gst-plugins-bad0.10-$BADVERSION~git$DATE
+fixcontrol
 bumplog gst-plugins-bad0.10 $BADVERSION
 build
 
@@ -293,6 +303,7 @@ EOF
 dpkg-source -x $DSC
 
 cd gst-plugins-ugly0.10-$UGLYVERSION~git$DATE
+fixcontrol
 bumplog gst-plugins-ugly0.10 $UGLYVERSION
 build
 
@@ -328,6 +339,7 @@ EOF
 dpkg-source -x $DSC
 
 cd gstreamer0.10-ffmpeg-$FFMPEGVERSION~git$DATE
+fixcontrol
 bumplog gstreamer0.10-ffmpeg $FFMPEGVERSION
 build
 
@@ -363,6 +375,8 @@ Files:
 EOF
 
 dpkg-source -x $DSC
+
 cd gst0.10-python-$PYTHONVERSION~git$DATE
+fixcontrol
 bumplog gst0.10-python $PYTHONVERSION
 build
