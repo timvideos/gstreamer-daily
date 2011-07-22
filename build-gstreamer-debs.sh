@@ -61,11 +61,21 @@ EOF
 }
 
 function fixdepends {
-	sed -i debian/control* \
-		-e ":^Build:s:libgstreamer0.10-dev [^,]*:libgstreamer0.10-dev (= $BASEVERSION~git$DATE):g" \
-		-e ":^Build:s:gstreamer-tools[^,]*:gstreamer-tools (= $BASEVERSION~git$DATE):g" \
-		-e ":^Build:s:libgstreamer-plugins-base0.10-dev[^,]*:libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE):g" \
-		-e ":^Build:s:gstreamer0.10-plugins-base[^,]*:gstreamer0.10-plugins-base (= $BASEVERSION~git$DATE):g"
+	sed -i debian/control.in \
+		-e "/^Build/s_libgstreamer0\.10-dev[^,]*_libgstreamer0.10-dev \(= $BASEVERSION\~git$DATE\)_" \
+		-e "/^Build/s_gstreamer-tools[^,]*_gstreamer-tools (= $BASEVERSION~git$DATE)_g" \
+		-e "/^Build/s_libgstreamer-plugins-base0\.10-dev[^,]*_libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE)_g" \
+		-e "/^Build/s_gstreamer0\.10-plugins-base[^,]*_gstreamer0.10-plugins-base (= $BASEVERSION~git$DATE)_g"
+
+	sed -i debian/build-deps.in \
+		-e "s_libgstreamer0\.10-dev[^,]*_libgstreamer0.10-dev \(= $BASEVERSION\~git$DATE\)_" \
+		-e "s_gstreamer-tools[^,]*_gstreamer-tools (= $BASEVERSION~git$DATE)_g" \
+		-e "s_libgstreamer-plugins-base0\.10-dev[^,]*_libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE)_g" \
+		-e "s_gstreamer0\.10-plugins-base[^,]*_gstreamer0.10-plugins-base (= $BASEVERSION~git$DATE)_g"
+
+	sed -i debian/rules \
+		-e "/^gst_lib_dev_dep/s_0\.10\.[0-9][0-9]_$BASEVERSION~git${DATE}_g" \
+		-e "/^gst_lib_dev_dep/s_0\.10\.[0-9][0-9]_$BASEVERSION~git${DATE}_g"
 }
 
 echo $DATE
