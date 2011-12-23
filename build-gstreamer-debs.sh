@@ -62,16 +62,16 @@ EOF
 
 function fixdepends {
 	sed -i debian/control.in \
-		-e "/^Build/s_libgstreamer0\.10-dev[^,]*_libgstreamer0.10-dev \(= $BASEVERSION\~git$DATE\)_" \
-		-e "/^Build/s_gstreamer-tools[^,]*_gstreamer-tools (= $BASEVERSION\~git$DATE)_g" \
-		-e "/^Build/s_libgstreamer-plugins-base0\.10-dev[^,]*_libgstreamer-plugins-base0.10-dev (= $BASEVERSION\~git$DATE)_g" \
-		-e "/^Build/s_gstreamer0\.10-plugins-base[^,]*_gstreamer0.10-plugins-base (= $BASEVERSION\~git$DATE)_g" \
+		-e "/Depend/s_libgstreamer0\.10-dev[^,]*_libgstreamer0.10-dev \(= $BASEVERSION\~git$DATE\)_" \
+		-e "/Depend/s_gstreamer-tools[^,]*_gstreamer-tools (= $BASEVERSION\~git$DATE)_g" \
+		-e "/Depend/s_libgstreamer-plugins-base0\.10-dev[^,]*_libgstreamer-plugins-base0.10-dev (= $BASEVERSION\~git$DATE)_g" \
+		-e "/Depend/s_gstreamer0\.10-plugins-base[^,]*_gstreamer0.10-plugins-base (= $BASEVERSION\~git$DATE)_g" \
 	|| true
 	sed -i debian/control \
-		-e "/^Build/s_libgstreamer0\.10-dev[^,]*_libgstreamer0.10-dev \(= $BASEVERSION\~git$DATE\)_" \
-		-e "/^Build/s_gstreamer-tools[^,]*_gstreamer-tools (= $BASEVERSION\~git$DATE)_g" \
-		-e "/^Build/s_libgstreamer-plugins-base0\.10-dev[^,]*_libgstreamer-plugins-base0.10-dev (= $BASEVERSION\~git$DATE)_g" \
-		-e "/^Build/s_gstreamer0\.10-plugins-base[^,]*_gstreamer0.10-plugins-base (= $BASEVERSION\~git$DATE)_g" \
+		-e "/Depend/s_libgstreamer0\.10-dev[^,]*_libgstreamer0.10-dev \(= $BASEVERSION\~git$DATE\)_" \
+		-e "/Depend/s_gstreamer-tools[^,]*_gstreamer-tools (= $BASEVERSION\~git$DATE)_g" \
+		-e "/Depend/s_libgstreamer-plugins-base0\.10-dev[^,]*_libgstreamer-plugins-base0.10-dev (= $BASEVERSION\~git$DATE)_g" \
+		-e "/Depend/s_gstreamer0\.10-plugins-base[^,]*_gstreamer0.10-plugins-base (= $BASEVERSION\~git$DATE)_g" \
 	|| true
 
 	sed -i debian/build-deps.in \
@@ -137,10 +137,13 @@ TAR=gstreamer0.10_$BASEVERSION~git$DATE.orig.tar.bz2
 tar -cjvf $TAR gstreamer0.10-$BASEVERSION
 rm -rf gstreamer0.10-$BASEVERSION
 
-TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
+TAR_MD5=`md5sum $TAR | sed -e's: .*::'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
-cp $ROOT/gstreamer-debian.tar.gz gstreamer0.10_$BASEVERSION~git$DATE.debian.tar.gz
+DEBTGZ=gstreamer0.10_$BASEVERSION~git$DATE.debian.tar.gz
+cp $ROOT/gstreamer-debian.tar.gz $DEBTGZ
+DEBTGZ_MD5=`md5sum $DEBTGZ | sed -e's: .*::'`
+DEBTGZ_SIZE=`du -b $DEBTGZ | sed -e's/\s.*//'`
 
 DSC=gstreamer0.10_$BASEVERSION~git$DATE.dsc
 cat > $DSC <<EOF 
@@ -157,7 +160,7 @@ Build-Depends: debhelper (>= 7), cdbs (>= 0.4.20), gnome-pkg-tools (>= 0.7), aut
 Build-Depends-Indep: python (>= 2.2), gtk-doc-tools (>= 0.7), jade (>= 1.2.1), transfig (>= 3.2.3.c), docbook-utils (>= 0.6.9), docbook-xml, docbook-xsl, xsltproc (>= 1.0.21), ghostscript, xmlto, netpbm, libxml2-doc, libglib2.0-doc
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
- b86e1bcf1853168d27aa28d756daa805 41748 gstreamer0.10_$BASEVERSION~git$DATE.debian.tar.gz
+ $DEBTGZ_MD5 $DEBTGZ_SIZE $DEBTGZ
 EOF
 
 dpkg-source -x $DSC
@@ -184,7 +187,10 @@ cp gst-plugins-base/gst-plugins-base-$BASEVERSION.tar.gz $TAR
 TAR_MD5=`md5sum $TAR | sed -e's: .*::'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
-cp $ROOT/gst-plugins-base-debian.tar.gz gst-plugins-base0.10_$BASEVERSION~git$DATE.debian.tar.gz
+DEBTGZ=gst-plugins-base0.10_$BASEVERSION~git$DATE.debian.tar.gz
+cp $ROOT/gst-plugins-base-debian.tar.gz $DEBTGZ
+DEBTGZ_MD5=`md5sum $DEBTGZ | sed -e's: .*::'`
+DEBTGZ_SIZE=`du -b $DEBTGZ | sed -e's/\s.*//'`
 
 DSC=gst-plugins-base_$BASEVERSION~git$DATE.dsc
 cat > $DSC <<EOF 
@@ -200,7 +206,7 @@ Standards-Version: 3.8.4
 Build-Depends: libgstreamer0.10-dev (= $BASEVERSION~git$DATE), libasound2-dev (>= 0.9.0) [linux-any], libgudev-1.0-dev (>= 143) [linux-any], autotools-dev, dh-autoreconf, autopoint | gettext, cdbs (>= 0.4.20), debhelper (>= 7), gnome-pkg-tools (>= 0.7), pkg-config (>= 0.11.0), libxv-dev (>= 6.8.2.dfsg.1-3), libxt-dev (>= 6.8.2.dfsg.1-3), libvorbis-dev (>= 1.0.0-2), libvorbisidec-dev (>= 1.0.0-2), libcdparanoia-dev (>= 3.10.2) [!hurd-i386], libgnomevfs2-dev (>= 1:2.20.0-2), liborc-0.4-dev (>= 1:0.4.11), libpango1.0-dev (>= 1.16.0), libtheora-dev (>= 1.1), libglib2.0-dev (>= 2.22), libxml2-dev (>= 2.4.23), zlib1g-dev (>= 1:1.1.4), libvisual-0.4-dev (>= 0.4.0), gstreamer-tools (= $BASEVERSION~git$DATE), dpkg-dev (>= 1.15.1), iso-codes, libgtk2.0-dev (>= 2.12.0), libglib2.0-doc, gstreamer0.10-doc, libgirepository1.0-dev (>= 0.6.3), gobject-introspection (>= 0.6.5), gir1.0-glib-2.0, gir1.0-freedesktop, gir1.0-gstreamer-0.10
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
- d45c425b6a76ce27ee8435151e3c58c2 38805 gst-plugins-base0.10_$BASEVERSION~git$DATE.debian.tar.gz
+ $DEBTGZ_MD5 $DEBTGZ_SIZE $DEBTGZ
 EOF
 
 dpkg-source -x $DSC
@@ -224,10 +230,13 @@ getsource gst-plugins-good
 
 TAR=gst-plugins-good0.10_$GOODVERSION~git$DATE.orig.tar.gz
 cp gst-plugins-good/gst-plugins-good-$GOODVERSION.tar.gz $TAR
-TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
+TAR_MD5=`md5sum $TAR | sed -e's: .*::'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
-cp $ROOT/gst-plugins-good-debian.tar.gz gst-plugins-good0.10_$GOODVERSION~git$DATE.debian.tar.gz
+DEBTGZ=gst-plugins-good0.10_$GOODVERSION~git$DATE.debian.tar.gz
+cp $ROOT/gst-plugins-good-debian.tar.gz $DEBTGZ
+DEBTGZ_MD5=`md5sum $DEBTGZ | sed -e's: .*::'`
+DEBTGZ_SIZE=`du -b $DEBTGZ | sed -e's/\s.*//'`
 
 DSC=gst-plugins-good0.10_$GOODVERSION~git$DATE.dsc
 cat > $DSC <<EOF 
@@ -242,7 +251,7 @@ Standards-Version: 3.8.4
 Build-Depends: libgstreamer0.10-dev (= $BASEVERSION~git$DATE), libraw1394-dev (>= 2.0.0) [linux-any], libiec61883-dev (>= 1.0.0) [linux-any], libavc1394-dev [linux-any], libv4l-dev [linux-any], libgudev-1.0-dev (>= 143) [linux-any], libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE), autotools-dev, dh-autoreconf, autopoint | gettext, cdbs (>= 0.4.20), debhelper (>= 5), dpkg-dev (>= 1.15.1), pkg-config (>= 0.11.0), gtk-doc-tools, gconf2, libglib2.0-dev (>= 2.22), liborc-0.4-dev (>= 1:0.4.11), libcairo2-dev, libcaca-dev, libspeex-dev (>= 1.1.6), libpng12-dev, libshout3-dev, libjpeg62-dev (>= 6b), libaa1-dev (>= 1.4p5), libflac-dev (>= 1.1.4), libdv4-dev | libdv-dev, libgconf2-dev, libxdamage-dev, libxext-dev, libxfixes-dev, libxv-dev, libxml2-dev, libgtk2.0-dev (>= 2.8), libtag1-dev (>= 1.5), libwavpack-dev (>= 4.20), gstreamer-tools (= $BASEVERSION~git$DATE), gstreamer0.10-plugins-base (= $BASEVERSION~git$DATE), libsoup-gnome2.4-dev (>= 2.26), libpulse-dev (>= 0.9.20), libbz2-dev, gstreamer0.10-doc, gstreamer0.10-plugins-base-doc, libjack-dev (>= 0.99.10)
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
- 71531d2a5bd3116db2ef7de51a2ace8a 30349 gst-plugins-good0.10_$GOODVERSION~git$DATE.debian.tar.gz
+ $DEBTGZ_MD5 $DEBTGZ_SIZE $DEBTGZ
 EOF
 
 dpkg-source -x $DSC
@@ -260,10 +269,13 @@ getsource gst-plugins-bad libtoolize.patch
 
 TAR=gst-plugins-bad0.10_$BADVERSION~git$DATE.orig.tar.gz
 cp gst-plugins-bad/gst-plugins-bad-$BADVERSION.tar.gz $TAR
-TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
+TAR_MD5=`md5sum $TAR | sed -e's: .*::'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
-cp $ROOT/gst-plugins-bad-debian.tar.gz gst-plugins-bad0.10_$BADVERSION~git$DATE.debian.tar.gz
+DEBTGZ=gst-plugins-bad0.10_$BADVERSION~git$DATE.debian.tar.gz
+cp $ROOT/gst-plugins-bad-debian.tar.gz $DEBTGZ
+DEBTGZ_MD5=`md5sum $DEBTGZ | sed -e's: .*::'`
+DEBTGZ_SIZE=`du -b $DEBTGZ | sed -e's/\s.*//'`
 
 DSC=gst-plugins-bad0.10_$BADVERSION~git$DATE.dsc
 cat > $DSC <<EOF 
@@ -278,7 +290,7 @@ Standards-Version: 3.8.4
 Build-Depends: autopoint | gettext, autotools-dev, cdbs (>= 0.4.32), debhelper (>= 7), dh-autoreconf, dpkg-dev (>= 1.15.1), flite-dev, libasound2-dev (>= 0.9.1) [linux-any], libcdaudio-dev [linux-any], libdc1394-22-dev (>= 2.0.0) [linux-any], libgstreamer0.10-dev (= $BASEVERSION~git$DATE), gstreamer0.10-doc, gstreamer0.10-plugins-base (= $BASEVERSION~git$DATE), gstreamer0.10-plugins-base-doc, gstreamer-tools (= $BASEVERSION~git$DATE), gtk-doc-tools, ladspa-sdk, libass-dev (>= 0.9.4), libbz2-dev, libcairo2-dev, libcelt-dev (>= 0.5.0), libdca-dev, libdirac-dev (>= 0.10), libdirectfb-dev (>= 0.9.25), libdvdnav-dev (>= 4.1.2) [!hurd-any], libexempi-dev, libexif-dev (>= 0.6.16), libfaad-dev, libglib2.0-dev (>= 2.22), libgme-dev, libgsm1-dev, libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE), libgtk2.0-dev (>= 2.14.0), libiptcdata0-dev (>= 1.0.2), libjasper-dev, libkate-dev (>= 0.1.7), libmimic-dev (>= 1.0), libmms-dev (>= 0.4), libmodplug-dev, libmpcdec-dev, libmusicbrainz4-dev (>= 2.1.0), libofa0-dev (>= 0.9.3), libopenspc-dev [i386], liborc-0.4-dev (>= 1:0.4.11), libpng12-dev, librsvg2-dev (>= 2.14.0), librtmp-dev, libschroedinger-dev (>= 1.0.7), libsdl1.2-dev, libslv2-dev (>= 0.6.6), libsndfile1-dev (>= 1.0.16), libsoundtouch1-dev, libssl-dev, libvpx-dev, libwildmidi-dev (>= 0.2.3), libx11-dev, lv2core, pkg-config (>= 0.11.0)
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
- 3a87f741df05dcb7fe5723b22dc40969 20372 gst-plugins-bad0.10_$BADVERSION~git$DATE.debian.tar.gz
+ $DEBTGZ_MD5 $DEBTGZ_SIZE $DEBTGZ
 EOF
 
 dpkg-source -x $DSC
@@ -298,10 +310,13 @@ getsource gst-plugins-ugly libtoolize.patch
 
 TAR=gst-plugins-ugly0.10_$UGLYVERSION~git$DATE.orig.tar.gz
 cp gst-plugins-ugly/gst-plugins-ugly-$UGLYVERSION.tar.gz $TAR
-TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
+TAR_MD5=`md5sum $TAR | sed -e's: .*::'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
-cp $ROOT/gst-plugins-ugly-debian.tar.gz gst-plugins-ugly0.10_$UGLYVERSION~git$DATE.debian.tar.gz
+DEBTGZ=gst-plugins-ugly0.10_$UGLYVERSION~git$DATE.debian.tar.gz
+cp $ROOT/gst-plugins-ugly-debian.tar.gz $DEBTGZ
+DEBTGZ_MD5=`md5sum $DEBTGZ | sed -e's: .*::'`
+DEBTGZ_SIZE=`du -b $DEBTGZ | sed -e's/\s.*//'`
 
 DSC=gst-plugins-ugly0.10_$UGLYVERSION~git$DATE.dsc
 cat > $DSC <<EOF 
@@ -316,7 +331,7 @@ Standards-Version: 3.8.4
 Build-Depends: autopoint | gettext, autotools-dev, cdbs (>= 0.4.20), debhelper (>= 7), dh-autoreconf, dpkg-dev (>= 1.15.1), libgstreamer0.10-dev (= $BASEVERSION~git$DATE), gstreamer0.10-doc, gstreamer0.10-plugins-base, gstreamer0.10-plugins-base-doc, gstreamer-tools (= $BASEVERSION~git$DATE), gtk-doc-tools, liba52-0.7.4-dev, libcdio-dev (>= 0.76), libdvdread-dev (>= 0.9.0), libglib2.0-dev (>= 2.20), libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE), libid3tag0-dev, libmad0-dev (>= 0.15), libmpeg2-4-dev (>= 0.4.0), libopencore-amrnb-dev, libopencore-amrwb-dev, liborc-0.4-dev (>= 1:0.4.6), libsidplay1-dev, libtwolame-dev (>= 0.3.10), pkg-config (>= 0.11.0)
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
- 7ccb867c72f4ddc3606167077f9b9787 26391 gst-plugins-ugly0.10_$UGLYVERSION~git$DATE.debian.tar.gz
+ $DEBTGZ_MD5 $DEBTGZ_SIZE $DEBTGZ
 EOF
 
 
@@ -330,15 +345,18 @@ build
 # Build gst-ffmpeg
 ###############################################################################
 cd $OUTPUT
-FFMPEGVERSION=0.10.12
+FFMPEGVERSION=0.10.12.1
 getsource gst-ffmpeg libtoolize.patch
 
 TAR=gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.orig.tar.gz
 cp gst-ffmpeg/gst-ffmpeg-$FFMPEGVERSION.tar.gz $TAR
-TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
+TAR_MD5=`md5sum $TAR | sed -e's: .*::'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
-cp $ROOT/gstreamer-ffmpeg-debian.tar.gz gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.debian.tar.gz
+DEBTGZ=gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.debian.tar.gz
+cp $ROOT/gstreamer-ffmpeg-debian.tar.gz $DEBTGZ
+DEBTGZ_MD5=`md5sum $DEBTGZ | sed -e's: .*::'`
+DEBTGZ_SIZE=`du -b $DEBTGZ | sed -e's/\s.*//'`
 
 DSC=gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.dsc
 cat > $DSC <<EOF
@@ -353,7 +371,7 @@ Standards-Version: 3.8.4
 Build-Depends: debhelper (>= 7), cdbs (>= 0.4.8), autotools-dev, zlib1g-dev, libglib2.0-dev (>= 2.4.0), pkg-config (>= 0.11.0), libgstreamer0.10-dev (= $BASEVERSION~git$DATE), libgstreamer-plugins-base0.10-dev (= $BASEVERSION~git$DATE), liborc-0.4-dev (>= 0.4.5), gstreamer-tools (= $BASEVERSION~git$DATE), libbz2-dev, lsb-release, yasm
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
- 134541939457e654f5dde561da0b1a86 9344 gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.debian.tar.gz
+ $DEBTGZ_MD5 $DEBTGZ_SIZE $DEBTGZ
 EOF
 
 dpkg-source -x $DSC
@@ -371,10 +389,13 @@ getsource gst-python libtoolize.patch
 
 TAR=gst0.10-python_$PYTHONVERSION~git$DATE.orig.tar.gz
 cp gst-python/gst-python-$PYTHONVERSION.tar.gz $TAR
-TAR_MD5=`md5sum $TAR | sed -e's/ .*//'`
+TAR_MD5=`md5sum $TAR | sed -e's: .*::'`
 TAR_SIZE=`du -b $TAR | sed -e's/\s.*//'`
 
-cp $ROOT/gst-python-debian.tar.gz gst0.10-python_$PYTHONVERSION~git$DATE.debian.tar.gz
+DEBTGZ=gst0.10-python_$PYTHONVERSION~git$DATE.debian.tar.gz
+cp $ROOT/gst-python-debian.tar.gz $DEBTGZ
+DEBTGZ_MD5=`md5sum $DEBTGZ | sed -e's: .*::'`
+DEBTGZ_SIZE=`du -b $DEBTGZ | sed -e's/\s.*//'`
 
 DSC=gst0.10-python_$PYTHONVERSION~git$DATE.dsc
 cat > $DSC <<EOF
@@ -391,7 +412,7 @@ Build-Depends: debhelper (>= 7), pkg-config, libgstreamer0.10-dev (= $BASEVERSIO
 Python-Version: >= 2.3
 Files: 
  $TAR_MD5 $TAR_SIZE $TAR
- 5e376af97c5e2ad3a64cd96b5148d29f 10060 gst0.10-python_$PYTHONVERSION~git$DATE.debian.tar.gz
+ $DEBTGZ_MD5 $DEBTGZ_SIZE $DEBTGZ
 EOF
 
 dpkg-source -x $DSC
