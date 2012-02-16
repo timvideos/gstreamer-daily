@@ -345,7 +345,7 @@ build
 # Build gst-ffmpeg
 ###############################################################################
 cd $OUTPUT
-FFMPEGVERSION=0.10.12.1
+FFMPEGVERSION=0.10.13.1
 getsource gst-ffmpeg libtoolize.patch
 
 TAR=gstreamer0.10-ffmpeg_$FFMPEGVERSION~git$DATE.orig.tar.gz
@@ -384,7 +384,7 @@ build
 # Build gst-python
 ###############################################################################
 cd $OUTPUT
-PYTHONVERSION=0.10.21.1
+PYTHONVERSION=0.10.22.1
 getsource gst-python libtoolize.patch
 
 TAR=gst0.10-python_$PYTHONVERSION~git$DATE.orig.tar.gz
